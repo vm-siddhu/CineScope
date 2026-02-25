@@ -1,6 +1,6 @@
 # CineScope - Simplified MERN Movie App
 
-A beginner-friendly, portfolio-ready Movie Discovery application.
+
 
 ## 🚀 Features
 - **User Authentication**: Register and Login functionality.
@@ -43,3 +43,4 @@ A beginner-friendly, portfolio-ready Movie Discovery application.
 
 ## 📜 Credits
 Data provided by TMDB API.
+
