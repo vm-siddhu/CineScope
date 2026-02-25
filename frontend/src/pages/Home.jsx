@@ -21,7 +21,7 @@ const Home = () => {
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
-            const res = await axios.get('http://localhost:5000/api/movies/watchlist', {
+            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/movies/watchlist`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const ids = new Set(res.data.map(m => m.tmdbId));
@@ -35,7 +35,7 @@ const Home = () => {
         try {
             setLoading(true);
             setError('');
-            const res = await axios.get('http://localhost:5000/api/movies/popular');
+            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/movies/popular`);
             setMovies(res.data.results || []);
             setLoading(false);
         } catch (err) {
@@ -53,7 +53,7 @@ const Home = () => {
         }
         try {
             setLoading(true);
-            const res = await axios.get(`http://localhost:5000/api/movies/search?query=${searchQuery}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/movies/search?query=${searchQuery}`);
             setMovies(res.data.results);
             setLoading(false);
         } catch (err) {
@@ -67,7 +67,7 @@ const Home = () => {
 
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/movies/watchlist', {
+            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/movies/watchlist`, {
                 tmdbId: movie.id,
                 title: movie.title,
                 poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,

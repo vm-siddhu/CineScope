@@ -14,7 +14,7 @@ const Watchlist = () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/movies/watchlist', {
+            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/movies/watchlist`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMovies(res.data);
@@ -28,7 +28,7 @@ const Watchlist = () => {
     const removeFromWatchlist = async (movie) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:5000/api/movies/watchlist/${movie.tmdbId}`, {
+            await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/movies/watchlist/${movie.tmdbId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMovies(movies.filter(m => m.tmdbId !== movie.tmdbId));

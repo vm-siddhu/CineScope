@@ -11,7 +11,7 @@ const MovieDetail = () => {
     useEffect(() => {
         const fetchDetails = async () => {
             try {
-                const res = await axios.get(`http://localhost:5000/api/movies/details/${id}`);
+                const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/movies/details/${id}`);
                 setMovie(res.data);
                 setLoading(false);
             } catch (err) {
