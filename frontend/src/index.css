@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #3b82f6;
+  --color-brand-bg: #0f172a;
+  --color-brand-card: #1e293b;
+  --color-brand-text: #f8fafc;
+  --color-brand-muted: #94a3b8;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-brand-text antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-brand-primary hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors duration-200 text-sm;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/50 text-white placeholder-slate-500 transition-all;
+  }
+
+  .movie-grid {
+    @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-8;
+  }
+}
+
+/* Custom transitions */
+.page-transition {
+  @apply transition-all duration-300 ease-out;
+}
