@@ -42,7 +42,7 @@ router.get('/details/:id', async (req, res) => {
         const response = await axios.get(`${TMDB_BASE_URL}/movie/${req.params.id}`, {
             params: {
                 api_key: process.env.TMDB_API_KEY,
-                append_to_response: 'credits'
+                append_to_response: 'credits,videos'
             }
         });
         res.json(response.data);

@@ -73,8 +73,8 @@ const Register = () => {
                         </div>
                     </div>
 
-                    <button type="submit" className="w-full py-3 bg-brand-primary hover:bg-blue-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-brand-primary/20">
-                        Create Vault
+                    <button type="submit" className="w-full py-3  cursor-pointer   bg-brand-primary hover:bg-blue-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-brand-primary/20">
+                        Create Account
                     </button>
                 </form>
 

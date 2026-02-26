@@ -26,12 +26,12 @@ const MovieCard = ({ movie, onAction, actionLabel }) => {
                 <div className="mt-auto">
                     <button
                         onClick={() => onAction(movie)}
-                        className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all duration-200 border ${actionLabel === 'Added'
-                                ? 'bg-slate-800 border-slate-700 text-brand-muted cursor-default'
+                        className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all duration-200 border ${actionLabel 
+                                ? 'bg-red-700 border-red-600 text-white cursor-pointer'
                                 : 'bg-brand-primary/10 border-brand-primary/20 text-brand-primary hover:bg-brand-primary hover:text-white'
                             }`}
                     >
-                        {actionLabel}
+                        {actionLabel  ? "remove" : "Add to Watchlist"}
                     </button>
                 </div>
             </div>

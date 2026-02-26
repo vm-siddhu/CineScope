@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext, AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -35,7 +35,7 @@ function AppContent() {
                     <Route path="/watchlist" element={<ProtectedRoute><Watchlist /></ProtectedRoute>} />
                     <Route path="/movie/:id" element={<ProtectedRoute><MovieDetail /></ProtectedRoute>} />
 
-                    {/* Catch all redirect to home */}
+
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </main>
@@ -49,9 +49,9 @@ function AppContent() {
 function App() {
     return (
         <AuthProvider>
-            <Router>
+            <BrowserRouter>
                 <AppContent />
-            </Router>
+            </BrowserRouter>
         </AuthProvider>
     );
 }

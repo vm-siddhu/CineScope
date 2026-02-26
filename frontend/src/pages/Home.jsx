@@ -7,7 +7,7 @@ const Home = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [addedMovieIds, setAddedMovieIds] = useState(new Set());
+    const [addedMovieIds, setAddedMovieIds] = useState([]);
 
     useEffect(() => {
         fetchInitialData();
@@ -24,7 +24,7 @@ const Home = () => {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/movies/watchlist`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            const ids = new Set(res.data.map(m => m.tmdbId));
+            const ids = res.data.map(m => m.tmdbId);
             setAddedMovieIds(ids);
         } catch (err) {
             console.error('Failed to fetch watchlist IDs:', err);
@@ -63,7 +63,7 @@ const Home = () => {
     };
 
     const addToWatchlist = async (movie) => {
-        if (addedMovieIds.has(movie.id)) return;
+        if (addedMovieIds.includes(movie.id)) return;
 
         try {
             const token = localStorage.getItem('token');
@@ -78,11 +78,24 @@ const Home = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            setAddedMovieIds(prev => new Set(prev).add(movie.id));
+            setAddedMovieIds(prev => [...prev, movie.id]);
         } catch (err) {
             console.error('Add failed', err);
         }
     };
+
+    const removeFromWatchlist = async (movie) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/movies/watchlist/${movie.id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setAddedMovieIds(prev => prev.filter(id => id !== movie.id));
+        } catch (err) {
+            console.error('Removal failed', err);
+        }
+    };
+
 
     return (
         <div className="space-y-12">
@@ -133,8 +146,8 @@ const Home = () => {
                             <MovieCard
                                 key={movie.id}
                                 movie={movie}
-                                onAction={addToWatchlist}
-                                actionLabel={addedMovieIds.has(movie.id) ? "Added" : "Add to Watchlist"}
+                                onAction={addedMovieIds.includes(movie.id) ? removeFromWatchlist : addToWatchlist}
+                                actionLabel={addedMovieIds.includes(movie.id) ? true : false}
                             />
                         ))}
                     </div>
