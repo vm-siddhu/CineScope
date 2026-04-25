@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import {toastSuccess} from '../utils/toast'
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -16,13 +17,14 @@ const Login = () => {
             const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/login`, { email, password });
             login(res.data.user, res.data.token);
             navigate('/');
+            toastSuccess(`Welcome Back, ${res.data.user.name} `)
         } catch (err) {
             setError(err.response?.data?.message || 'Authentication failed. Please verify credentials.');
         }
     };
 
     return (
-        <div className="min-h-[80vh] flex items-center justify-center p-4">
+       <div className="w-full flex items-center justify-center p-6">
             <div className="w-full max-w-md space-y-8 bg-brand-card p-8 md:p-12 rounded-3xl border border-slate-800 shadow-2xl">
                 <div className="text-center space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight text-white">Welcome Back</h2>

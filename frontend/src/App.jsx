@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import Watchlist from './pages/Watchlist';
 import MovieDetail from './pages/MovieDetail';
 import './index.css';
+import { Toaster } from 'react-hot-toast';
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useContext(AuthContext);
@@ -26,7 +27,7 @@ function AppContent() {
     return (
         <div className="min-h-screen flex flex-col bg-brand-bg selection:bg-brand-primary/30">
             <Navbar />
-            <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col justify-center">
                 <Routes>
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
@@ -50,6 +51,12 @@ function App() {
     return (
         <AuthProvider>
             <BrowserRouter>
+                <Toaster position="top-right" reverseOrder={false} toastOptions={{
+                    style: {
+                        background: '#1e293b', color: '#fff', border: '1px solid #334155'
+                    }
+                }}
+                />
                 <AppContent />
             </BrowserRouter>
         </AuthProvider>

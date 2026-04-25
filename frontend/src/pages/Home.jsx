@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MovieCard from '../components/MovieCard';
+import {toastSuccess} from "../utils/toast"
 
 const Home = () => {
     const [movies, setMovies] = useState([]);
@@ -77,8 +78,9 @@ const Home = () => {
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-
             setAddedMovieIds(prev => [...prev, movie.id]);
+            toastSuccess('Added 🎬')
+
         } catch (err) {
             console.error('Add failed', err);
         }
@@ -91,6 +93,7 @@ const Home = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setAddedMovieIds(prev => prev.filter(id => id !== movie.id));
+              toastSuccess('Removed 🎬');
         } catch (err) {
             console.error('Removal failed', err);
         }
