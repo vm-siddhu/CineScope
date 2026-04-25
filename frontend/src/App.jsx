@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext, AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import Watchlist from './pages/Watchlist';
 import MovieDetail from './pages/MovieDetail';
 import './index.css';
+import { Toaster } from 'react-hot-toast';
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useContext(AuthContext);
@@ -26,7 +27,7 @@ function AppContent() {
     return (
         <div className="min-h-screen flex flex-col bg-brand-bg selection:bg-brand-primary/30">
             <Navbar />
-            <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col justify-center">
                 <Routes>
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
@@ -35,7 +36,7 @@ function AppContent() {
                     <Route path="/watchlist" element={<ProtectedRoute><Watchlist /></ProtectedRoute>} />
                     <Route path="/movie/:id" element={<ProtectedRoute><MovieDetail /></ProtectedRoute>} />
 
-                    {/* Catch all redirect to home */}
+
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </main>
@@ -49,9 +50,15 @@ function AppContent() {
 function App() {
     return (
         <AuthProvider>
-            <Router>
+            <BrowserRouter>
+                <Toaster position="top-right" reverseOrder={false} toastOptions={{
+                    style: {
+                        background: '#1e293b', color: '#fff', border: '1px solid #334155'
+                    }
+                }}
+                />
                 <AppContent />
-            </Router>
+            </BrowserRouter>
         </AuthProvider>
     );
 }

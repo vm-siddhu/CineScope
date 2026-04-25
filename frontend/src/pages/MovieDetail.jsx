@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import MovieTrailer from '../components/MovieTrailer'
 
 const MovieDetail = () => {
     const { id } = useParams();
@@ -86,7 +87,9 @@ const MovieDetail = () => {
                             {movie.overview}
                         </p>
                     </section>
+                    <MovieTrailer videos={movie.videos} />
                 </div>
+
 
                 <div className="space-y-8">
                     <section className="bg-brand-card p-6 rounded-3xl border border-slate-800 space-y-6">
@@ -108,6 +111,7 @@ const MovieDetail = () => {
                         </div>
                     </section>
                 </div>
+
             </div>
         </div>
     );
