@@ -20,10 +20,17 @@ api.interceptors.request.use((config) => {
 });
 
 // ── Response interceptor: log out on 401 ───────────────────────────────────
+// Skip the redirect for login / register calls — a wrong password also
+// returns 401, and we want the page to show its own inline error message
+// instead of wiping the form with a hard redirect.
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const url = error.config?.url || '';
+        const isAuthCall =
+            url.includes('/auth/login') || url.includes('/auth/register');
+
+        if (error.response?.status === 401 && !isAuthCall) {
             // Clear stale credentials and redirect to login.
             localStorage.removeItem('token');
             localStorage.removeItem('user');
