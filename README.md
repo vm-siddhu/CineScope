@@ -1,46 +1,123 @@
-# CineScope - Simplified MERN Movie App
+# CineScope 🎬
 
+A full-stack MERN watchlist app — search TMDB movies, curate a personal vault, and browse details.
 
+## Tech Stack
 
-## 🚀 Features
-- **User Authentication**: Register and Login functionality.
-- **TMDB Integration**: Explore popular movies and search for your favorites.
-- **Personal Watchlist**: Add or remove movies from your personal vault.
-- **Protected Routes**: Secure access to app features.
+| Layer | Tech |
+|---|---|
+| Frontend | React 19, Vite, Tailwind CSS v4 |
+| Backend | Node.js, Express 4, Mongoose 8 |
+| Database | MongoDB (local) |
+| Auth | JWT (bcryptjs + jsonwebtoken) |
+| TMDB | Server-side proxy with cache & retry |
+| Tests | Jest + Supertest + mongodb-memory-server |
+| CI | GitHub Actions |
 
-## 📂 Project Structure
+---
 
-### Backend (`/backend`)
-- `server.js`: Main entry point and server configuration.
-- `models/`: Database schemas (User, Movie).
-- `routes/`: API endpoints with business logic.
-- `middleware/`: Authentication checks.
+## Version A — Original (what was built)
 
-### Frontend (`/frontend`)
-- `src/App.jsx`: Root component with routing.
-- `src/context/`: Auth state management.
-- `src/pages/`: Main application views.
-- `src/components/`: Reusable UI parts.
+- Full-stack MERN watchlist with React 19, Vite and Tailwind.  
+  Auth state lives in Context API; protected routes redirect signed-out users.
+- JWT authentication: passwords hashed with bcrypt, Express middleware verifies every Bearer token,  
+  all watchlist queries are scoped to the signed-in user's ID.
+- Express proxy over the TMDB API (search, popular, details) that keeps the API key server-side,  
+  plus watchlist add / remove / list endpoints with per-user duplicate checks.
+- `User` and `Movie` Mongoose models; unique email constraint; TMDB fields stored on each watchlist  
+  item so the list loads without extra API calls.
 
-## 🛠️ Setup Instructions
+---
 
-### 1. Backend Setup
-1. `cd backend`
-2. `npm install`
-3. Create `.env` file:
-   ```env
-   PORT=5000
-   MONGODB_URI=your_mongodb_uri
-   JWT_SECRET=your_jwt_secret
-   TMDB_API_KEY=your_tmdb_api_key
-   ```
-4. `npm run dev` (starts on localhost:5000)
+## Version B — Hardened & Measured (this branch)
 
-### 2. Frontend Setup
-1. `cd frontend`
-2. `npm install`
-3. `npm run dev` (starts on localhost:5173)
+### Auth hardening
 
-## 📜 Credits
-Data provided by TMDB API.
+| What | How |
+|---|---|
+| Short-lived tokens | `jwt.sign(..., { expiresIn: '1h' })` in both register and login |
+| Consistent 401 on bad tokens | `authMiddleware.js` inner try/catch around `jwt.verify` — expired and malformed tokens now return **401**, not 500 |
+| Auto logout on 401 | `src/utils/api.js` — shared axios instance with a response interceptor that clears localStorage and redirects to `/login` |
+| Route guard token check | `AuthContext.jsx` reads the JWT `exp` claim with `atob` on startup; stale tokens are cleared before any API call |
+| Login rate limiting | `express-rate-limit` — 10 requests / 15 min per IP on `POST /api/auth/login` |
+| Input validation | `express-validator` — name, email format, password length ≥ 6 chars on register; email + password on login |
 
+### Database indexing — proof
+
+Compound unique index on `{ userId: 1, tmdbId: 1 }` added in `models/Movie.js`.
+
+**Benchmark** — `node seed.js --clean` then `node benchmark.js` on 3 000 seeded documents:
+
+| | WITH index | WITHOUT index |
+|---|---|---|
+| Winning plan stage | `FETCH` (IXSCAN) | `COLLSCAN` |
+| Docs examined | **1** | **3 000** |
+| Keys examined | 1 | 0 |
+| Execution time | 6 ms | 4 ms |
+
+> The index reduces examined documents from 3 000 → 1 (3 000× fewer reads).  
+> The duplicate-insert race is now fixed at the DB level: `E11000` is caught and returned as **409 Conflict**.
+
+### TMDB resilience
+
+| What | How |
+|---|---|
+| Server-side cache | `node-cache`, TTL = 7 min, on `/popular` and `/details/:id` |
+| Cache hit/miss logging | Every request logs `[CACHE HIT]` or `[CACHE MISS]` plus running stats |
+| Request timeout | 8 s `axios` timeout in `tmdbGet()` |
+| Retry with backoff | Up to 3 retries, exponential backoff (500 ms → 1 s → 2 s) on TMDB 429 or 5xx |
+| Debounced search | 300 ms debounce in `Home.jsx` — no request fired until the user pauses |
+| Cancellable requests | `AbortController` cancels in-flight search requests when a new keystroke arrives |
+| URL encoding | Query passed via axios `params` object — axios calls `encodeURIComponent` automatically |
+| Cache stats endpoint | `GET /api/movies/cache-stats` returns hits, misses, hit rate |
+
+### Tests — 19 / 19 passing ✅
+
+```
+Test Suites: 2 passed, 2 total
+Tests:       19 passed, 19 total
+Time:        ~60 s (first run downloads mongodb-memory-server binary)
+```
+
+Test files:
+- `backend/__tests__/auth.test.js` — register, login, validation, duplicate, JWT expiry claim
+- `backend/__tests__/watchlist.test.js` — auth middleware (no token / bad token / expired), add, duplicate → 409, per-user isolation, remove
+
+Run with:
+```bash
+cd backend
+npm test
+```
+
+CI runs automatically on every push via `.github/workflows/ci.yml`.
+
+---
+
+## Quick Start
+
+```bash
+# 1. Backend
+cd backend
+cp .env.example .env   # fill in MONGODB_URI, JWT_SECRET, TMDB_API_KEY
+npm install
+npm run dev            # http://localhost:5000
+
+# 2. Frontend
+cd frontend
+npm install
+npm run dev            # http://localhost:5173
+```
+
+## Scripts
+
+```bash
+# Backend
+npm run dev        # nodemon
+npm test           # Jest + Supertest
+node seed.js --clean   # seed 3 000 docs
+node benchmark.js      # compare explain() with/without index
+
+# Frontend
+npm run dev        # Vite dev server
+npm run build      # production bundle
+```

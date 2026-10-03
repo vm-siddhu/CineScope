@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import MovieCard from '../components/MovieCard';
 
 const Watchlist = () => {
@@ -13,24 +13,18 @@ const Watchlist = () => {
     const fetchWatchlist = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/movies/watchlist`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.get('/movies/watchlist');
             setMovies(res.data);
-            setLoading(false);
         } catch (err) {
             console.error(err);
+        } finally {
             setLoading(false);
         }
     };
 
     const removeFromWatchlist = async (movie) => {
         try {
-            const token = localStorage.getItem('token');
-            await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/movies/watchlist/${movie.tmdbId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.delete(`/movies/watchlist/${movie.tmdbId}`);
             setMovies(movies.filter(m => m.tmdbId !== movie.tmdbId));
         } catch (err) {
             console.error('Removal failed', err);
