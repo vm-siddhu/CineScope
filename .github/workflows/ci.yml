@@ -2,7 +2,7 @@ name: CI — Jest Tests
 
 on:
   push:
-    branches: [main, master, dev]
+    branches: [main, master, dev, UpdateUI]
   pull_request:
     branches: [main, master]
 
@@ -31,4 +31,5 @@ jobs:
       - name: Run tests
         run: npm test
         env:
-          JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-test-secret-key' }}
+          # Use repo secret if set, otherwise fall back to a CI-only placeholder.
+          JWT_SECRET: ${{ secrets.JWT_SECRET != '' && secrets.JWT_SECRET || 'ci-test-secret-key' }}
