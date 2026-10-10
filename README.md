@@ -1,17 +1,19 @@
 # CineScope 🎬
 
-A full-stack MERN watchlist app — search TMDB movies, curate a personal vault, and browse details.
+A full-stack MERN watchlist app — search TMDB movies, curate a personal vault, browse details, and experience cinematic UI vibes.
+
+> 📖 **[Read the Full System Design & Architecture Document](file:///d:/SEM-6/MERN-PEP/Project4/SYSTEM_DESIGN_AND_ARCHITECTURE.md)** for a complete step-by-step breakdown of execution flows, component architecture, database compound indexing, security controls, and proxy caching mechanics.
 
 ## Tech Stack
 
 | Layer | Tech |
 |---|---|
-| Frontend | React 19, Vite, Tailwind CSS v4 |
+| Frontend | React 19, Vite, Tailwind CSS v4, Glassmorphism, Micro-animations |
 | Backend | Node.js, Express 4, Mongoose 8 |
-| Database | MongoDB (local) |
-| Auth | JWT (bcryptjs + jsonwebtoken) |
-| TMDB | Server-side proxy with cache & retry |
-| Tests | Jest + Supertest + mongodb-memory-server |
+| Database | MongoDB (local) with Compound Unique Indexing |
+| Auth | JWT (bcryptjs + jsonwebtoken) with 1h Expiration & Interceptors |
+| TMDB | Server-side proxy with Node-Cache (7m TTL) & Exponential Backoff Retries |
+| Tests | Jest + Supertest + mongodb-memory-server (19/19 Passing) |
 | CI | GitHub Actions |
 
 ---

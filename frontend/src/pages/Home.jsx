@@ -135,27 +135,39 @@ const Home = () => {
     return (
         <div className="space-y-10">
             {/* Hero / Search */}
-            <header className="max-w-2xl mx-auto text-center space-y-5 pt-8">
-                <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white">
-                    Discover <span className="text-brand-primary">Movies</span>
-                </h1>
-                <p className="text-base text-brand-muted max-w-md mx-auto">
-                    Search, explore, and build your personal watchlist.
-                </p>
+            <header className="relative rounded-3xl overflow-hidden p-8 md:p-12 text-center border border-brand-border/60 shadow-2xl">
+                <div 
+                    className="absolute inset-0 bg-cover bg-center filter brightness-[0.35] scale-105 transition-transform duration-700 hover:scale-100"
+                    style={{ backgroundImage: "url('/assets/cinematic_bg.jpg')" }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-bg via-brand-bg/60 to-transparent" />
 
-                <div className="relative max-w-md mx-auto">
-                    <input
-                        type="text"
-                        placeholder="Search movies..."
-                        className="w-full pl-11 pr-4 py-3 bg-brand-surface border border-brand-border rounded-xl
-                        text-white placeholder-slate-500 text-sm
-                        transition-all duration-200
-                        focus:outline-none focus:border-brand-primary/60 focus:ring-1 focus:ring-brand-primary/30
-                        hover:border-slate-600"
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                    />
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <div className="relative z-10 max-w-2xl mx-auto space-y-5">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium tracking-wide">
+                        <span>🎬 Premier Movie Vault</span>
+                    </div>
+
+                    <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                        Discover & Curate <span className="text-brand-primary bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Cinematic Masterpieces</span>
+                    </h1>
+                    <p className="text-sm md:text-base text-slate-300 max-w-lg mx-auto font-normal leading-relaxed">
+                        Search TMDB's global repository, explore movie details, trailers, cast info, and sync your personal watchlist.
+                    </p>
+
+                    <div className="relative max-w-md mx-auto pt-2">
+                        <input
+                            type="text"
+                            placeholder="Search movies by title..."
+                            className="w-full pl-11 pr-4 py-3.5 bg-brand-surface/90 backdrop-blur-md border border-brand-border/80 rounded-xl
+                            text-white placeholder-slate-400 text-sm shadow-xl
+                            transition-all duration-200
+                            focus:outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20
+                            hover:border-slate-500"
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                        />
+                        <Search className="absolute left-3.5 top-[calc(50%+4px)] -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    </div>
                 </div>
             </header>
 

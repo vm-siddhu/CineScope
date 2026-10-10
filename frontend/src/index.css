@@ -38,12 +38,14 @@
 
   /* ── Auth pages ────────────────────────────────────────── */
   .auth-wrapper {
-    @apply w-full min-h-[calc(100vh-8rem)] flex items-center justify-center px-4;
+    @apply w-full min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-8 relative overflow-hidden;
+    background: radial-gradient(circle at center, rgba(17, 24, 39, 0.4) 0%, rgba(8, 12, 20, 0.95) 100%),
+                url('/assets/poster_wall.jpg') center/cover no-repeat;
   }
 
   .auth-card {
-    @apply w-full max-w-[420px] bg-brand-card/80 backdrop-blur-sm p-8 sm:p-10 rounded-2xl
-    border border-brand-border shadow-xl;
+    @apply w-full max-w-[420px] bg-brand-card/85 backdrop-blur-md p-8 sm:p-10 rounded-2xl
+    border border-brand-border/80 shadow-2xl relative z-10 shadow-blue-950/20;
   }
 
   .auth-label {
