@@ -9,19 +9,22 @@ const MovieTrailer = ({ videos }) => {
     if (!trailer) return null;
 
     return (
-        <div className="">
-            <h2 className="text-xl font-bold text-white tracking-tight border-l-4 border-brand-primary pl-4">Trailer: </h2>
-            <div className="aspect-video w-full mt-2 rounded-3xl overflow-hidden shadow-2xl border border-slate-800">
+        <section className="space-y-3">
+            <h2 className="text-lg font-semibold text-white border-l-3 border-brand-primary pl-3">
+                Trailer
+            </h2>
+            <div className="aspect-video w-full rounded-xl overflow-hidden border border-brand-border">
                 <iframe
                     width="100%"
                     height="100%"
                     src={`https://www.youtube.com/embed/${trailer.key}`}
-                    title="Movie Trailer"
+                    title={`${trailer.name || 'Movie'} Trailer`}
                     allowFullScreen
                     className="w-full h-full"
-                ></iframe>
+                    loading="lazy"
+                />
             </div>
-        </div>
+        </section>
     );
 };
 

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Trash2, Film } from 'lucide-react';
 import api from '../utils/api';
 import MovieCard from '../components/MovieCard';
+import { toastSuccess, toastError } from '../utils/toast';
 
 const Watchlist = () => {
     const [movies, setMovies] = useState([]);
@@ -16,6 +19,7 @@ const Watchlist = () => {
             const res = await api.get('/movies/watchlist');
             setMovies(res.data);
         } catch (err) {
+            toastError('Failed to load watchlist');
             console.error(err);
         } finally {
             setLoading(false);
@@ -25,45 +29,50 @@ const Watchlist = () => {
     const removeFromWatchlist = async (movie) => {
         try {
             await api.delete(`/movies/watchlist/${movie.tmdbId}`);
-            setMovies(movies.filter(m => m.tmdbId !== movie.tmdbId));
+            setMovies(prev => prev.filter(m => m.tmdbId !== movie.tmdbId));
+            toastSuccess('Removed from watchlist');
         } catch (err) {
+            toastError('Failed to remove. Try again.');
             console.error('Removal failed', err);
         }
     };
 
     return (
-        <div className="space-y-12 py-12">
-            <header className="space-y-2">
-                <h1 className="text-3xl font-extrabold tracking-tight text-white">Your Professional Vault</h1>
-                <p className="text-brand-muted">A curated repository of your selected cinematic interests.</p>
+        <div className="space-y-8 py-8">
+            <header className="space-y-1">
+                <h1 className="text-2xl font-bold text-white">Your Watchlist</h1>
+                <p className="text-sm text-brand-muted">
+                    {movies.length > 0
+                        ? `${movies.length} ${movies.length === 1 ? 'movie' : 'movies'} saved`
+                        : 'Movies you save will appear here'
+                    }
+                </p>
             </header>
 
             {loading ? (
                 <div className="flex justify-center py-20">
-                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent" />
+                </div>
+            ) : movies.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                    <Film className="w-12 h-12 text-slate-700 mb-4" />
+                    <p className="text-brand-muted font-medium mb-1">Your watchlist is empty</p>
+                    <p className="text-sm text-slate-600 mb-5">Start exploring and add movies you want to watch</p>
+                    <Link to="/" className="btn-primary">
+                        Browse Movies
+                    </Link>
                 </div>
             ) : (
-                <>
-                    {movies.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-32 space-y-4 bg-brand-card/30 border border-dashed border-slate-800 rounded-3xl">
-                            <svg className="w-12 h-12 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                            </svg>
-                            <p className="text-slate-500 font-medium">Your vault is currently empty.</p>
-                        </div>
-                    ) : (
-                        <div className="movie-grid">
-                            {movies.map(movie => (
-                                <MovieCard
-                                    key={movie._id}
-                                    movie={movie}
-                                    onAction={removeFromWatchlist}
-                                    actionLabel="Remove from Vault"
-                                />
-                            ))}
-                        </div>
-                    )}
-                </>
+                <div className="movie-grid">
+                    {movies.map(movie => (
+                        <MovieCard
+                            key={movie._id}
+                            movie={movie}
+                            onAction={removeFromWatchlist}
+                            isWatchlistPage
+                        />
+                    ))}
+                </div>
             )}
         </div>
     );

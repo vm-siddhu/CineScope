@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Search } from 'lucide-react';
 import api from '../utils/api';
 import MovieCard from '../components/MovieCard';
-import { toastSuccess } from '../utils/toast';
+import { toastSuccess, toastError } from '../utils/toast';
 
 const DEBOUNCE_MS = 300;
 
@@ -48,7 +49,7 @@ const Home = () => {
         } catch (err) {
             if (err.name !== 'CanceledError') {
                 console.error('Fetch error:', err);
-                setError('Unable to reach the movie server. Please check your connection.');
+                setError('Unable to load movies. Please check your connection.');
             }
         } finally {
             setLoading(false);
@@ -108,12 +109,13 @@ const Home = () => {
                 year: movie.release_date ? movie.release_date.split('-')[0] : 'N/A'
             });
             setAddedMovieIds(prev => [...prev, movie.id]);
-            toastSuccess('Added 🎬');
+            toastSuccess('Added to watchlist');
         } catch (err) {
             if (err.response?.status === 409) {
                 // Already in watchlist (race-condition caught by DB index)
                 setAddedMovieIds(prev => [...prev, movie.id]);
             } else {
+                toastError('Failed to add. Try again.');
                 console.error('Add failed', err);
             }
         }
@@ -123,53 +125,69 @@ const Home = () => {
         try {
             await api.delete(`/movies/watchlist/${movie.id}`);
             setAddedMovieIds(prev => prev.filter(id => id !== movie.id));
-            toastSuccess('Removed 🎬');
+            toastSuccess('Removed from watchlist');
         } catch (err) {
+            toastError('Failed to remove. Try again.');
             console.error('Removal failed', err);
         }
     };
 
     return (
-        <div className="space-y-12">
-            <header className="max-w-3xl mx-auto text-center space-y-6 pt-12">
-                <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white">
-                    Cinema Without <span className="text-brand-primary">Boundaries</span>
+        <div className="space-y-10">
+            {/* Hero / Search */}
+            <header className="max-w-2xl mx-auto text-center space-y-5 pt-8">
+                <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white">
+                    Discover <span className="text-brand-primary">Movies</span>
                 </h1>
-                <p className="text-lg text-brand-muted max-w-xl mx-auto">
-                    Curated collections of the world's most exceptional storytelling, delivered directly to your vault.
+                <p className="text-base text-brand-muted max-w-md mx-auto">
+                    Search, explore, and build your personal watchlist.
                 </p>
 
                 <div className="relative max-w-md mx-auto">
                     <input
                         type="text"
-                        placeholder="Search for titles..."
-                        className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-primary/50 text-white transition-all outline-none"
+                        placeholder="Search movies..."
+                        className="w-full pl-11 pr-4 py-3 bg-brand-surface border border-brand-border rounded-xl
+                        text-white placeholder-slate-500 text-sm
+                        transition-all duration-200
+                        focus:outline-none focus:border-brand-primary/60 focus:ring-1 focus:ring-brand-primary/30
+                        hover:border-slate-600"
                         value={searchQuery}
                         onChange={handleSearchChange}
                     />
-                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 </div>
             </header>
 
-            <section className="space-y-8">
-                <div className="flex items-baseline justify-between border-b border-slate-800 pb-4">
-                    <h2 className="text-xl font-bold text-white tracking-tight">
-                        {searchQuery ? `Scanning context: "${searchQuery}"` : 'Global Curations'}
+            {/* Results */}
+            <section className="space-y-6">
+                <div className="flex items-baseline justify-between border-b border-brand-border pb-3">
+                    <h2 className="text-lg font-semibold text-white">
+                        {searchQuery ? `Results for "${searchQuery}"` : 'Popular Right Now'}
                     </h2>
-                    <span className="text-xs font-bold text-brand-muted uppercase tracking-widest">{movies.length} Results</span>
+                    <span className="text-xs text-brand-muted">
+                        {movies.length} {movies.length === 1 ? 'movie' : 'movies'}
+                    </span>
                 </div>
 
+                {/* Error state */}
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-red-400 text-sm text-center">
+                    <div className="bg-red-500/8 border border-red-500/15 p-4 rounded-xl text-red-400 text-sm text-center">
                         {error}
                     </div>
                 )}
 
+                {/* Loading state */}
                 {loading ? (
                     <div className="flex justify-center items-center py-20">
-                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent" />
+                    </div>
+                ) : movies.length === 0 ? (
+                    /* Empty state */
+                    <div className="flex flex-col items-center justify-center py-24 text-center">
+                        <Search className="w-10 h-10 text-slate-700 mb-3" />
+                        <p className="text-brand-muted font-medium">No movies found</p>
+                        <p className="text-sm text-slate-600 mt-1">Try a different search term</p>
                     </div>
                 ) : (
                     <div className="movie-grid">
@@ -177,8 +195,8 @@ const Home = () => {
                             <MovieCard
                                 key={movie.id}
                                 movie={movie}
+                                isInWatchlist={addedMovieIds.includes(movie.id)}
                                 onAction={addedMovieIds.includes(movie.id) ? removeFromWatchlist : addToWatchlist}
-                                actionLabel={addedMovieIds.includes(movie.id) ? true : false}
                             />
                         ))}
                     </div>

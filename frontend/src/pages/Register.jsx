@@ -1,87 +1,178 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
-import { toastSuccess } from '../utils/toast'
+import { toastSuccess } from '../utils/toast';
+
+/** Simple password strength scorer (0 – 4). */
+function getPasswordStrength(pw) {
+    if (!pw) return 0;
+    let score = 0;
+    if (pw.length >= 6) score++;
+    if (pw.length >= 10) score++;
+    if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+    if (/\d/.test(pw) || /[^A-Za-z0-9]/.test(pw)) score++;
+    return score;
+}
+
+const strengthConfig = [
+    { label: '', color: '' },
+    { label: 'Weak', color: 'bg-red-500' },
+    { label: 'Fair', color: 'bg-orange-500' },
+    { label: 'Good', color: 'bg-yellow-500' },
+    { label: 'Strong', color: 'bg-emerald-500' },
+];
 
 const Register = () => {
-    const [name, setName] = useState('');   
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [submitting, setSubmitting] = useState(false);
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
 
+    const strength = useMemo(() => getPasswordStrength(password), [password]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters.');
+            return;
+        }
+
+        setSubmitting(true);
         try {
             const res = await api.post('/auth/register', { name, email, password });
             login(res.data.user, res.data.token);
+            toastSuccess(`Welcome, ${res.data.user.name}!`);
             navigate('/');
-            toastSuccess(`Welcome ${res.data.user.name}`)
         } catch (err) {
-            setError(err.response?.data?.message || 'Registration failed. Please review your input.');
+            setError(err.response?.data?.message || 'Registration failed. Please try again.');
+        } finally {
+            setSubmitting(false);
         }
     };
 
     return (
-        <div className="w-full flex items-center justify-center p-6">
-            <div className="w-full max-w-md space-y-8 bg-brand-card p-8 md:p-12 rounded-3xl border border-slate-800 shadow-2xl">
-                <div className="text-center space-y-2">
-                    <h2 className="text-3xl font-bold tracking-tight text-white">Join the Collective</h2>
-                    <p className="text-brand-muted text-sm">Initialize your professional movie vault</p>
+        <div className="auth-wrapper">
+            <div className="auth-card animate-fade-up">
+                {/* Header */}
+                <div className="mb-8">
+                    <h2 className="text-2xl font-bold text-white mb-1">Create your account</h2>
+                    <p className="text-sm text-brand-muted">
+                        Start building your personal watchlist
+                    </p>
                 </div>
 
+                {/* Error */}
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl text-red-400 text-xs text-center font-medium">
+                    <div className="mb-5 px-4 py-3 bg-red-500/8 border border-red-500/15 rounded-xl text-red-400 text-sm animate-shake">
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-4">
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Full Identity</label>
-                            <input
-                                type="text"
-                                placeholder="Your Name"
-                                className="input-field"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Account ID</label>
-                            <input
-                                type="email"
-                                placeholder="name@domain.com"
-                                className="input-field"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Secure Key</label>
-                            <input
-                                type="password"
-                                placeholder="Min. 8 characters"
-                                className="input-field"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-5 stagger">
+                    <div className="animate-fade-up">
+                        <label htmlFor="reg-name" className="auth-label">Full name</label>
+                        <input
+                            id="reg-name"
+                            type="text"
+                            placeholder="John Doe"
+                            className="auth-input"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            autoComplete="name"
+                            required
+                        />
                     </div>
 
-                    <button type="submit" className="w-full py-3  cursor-pointer   bg-brand-primary hover:bg-blue-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-brand-primary/20">
-                        Create Account
+                    <div className="animate-fade-up">
+                        <label htmlFor="reg-email" className="auth-label">Email</label>
+                        <input
+                            id="reg-email"
+                            type="email"
+                            placeholder="you@example.com"
+                            className="auth-input"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            autoComplete="email"
+                            required
+                        />
+                    </div>
+
+                    <div className="animate-fade-up">
+                        <label htmlFor="reg-password" className="auth-label">Password</label>
+                        <div className="relative">
+                            <input
+                                id="reg-password"
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder="Min. 6 characters"
+                                className="auth-input pr-11"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                autoComplete="new-password"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                                tabIndex={-1}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+
+                        {/* Password strength meter */}
+                        {password.length > 0 && (
+                            <div className="mt-2.5 space-y-1.5 animate-fade-in">
+                                <div className="flex gap-1">
+                                    {[1, 2, 3, 4].map((level) => (
+                                        <div
+                                            key={level}
+                                            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                                                strength >= level
+                                                    ? strengthConfig[strength].color
+                                                    : 'bg-slate-700'
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+                                <p className="text-xs text-slate-500">
+                                    {strengthConfig[strength].label}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="auth-btn flex items-center justify-center gap-2 animate-fade-up"
+                    >
+                        {submitting ? (
+                            <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                <UserPlus size={16} />
+                                Create Account
+                            </>
+                        )}
                     </button>
                 </form>
 
-                <p className="text-center text-sm text-brand-muted">
-                    Already an operative? <Link to="/login" className="text-brand-primary font-bold hover:underline">Verify Identity</Link>
+                {/* Footer */}
+                <p className="mt-6 text-center text-sm text-brand-muted">
+                    Already have an account?{' '}
+                    <Link to="/login" className="auth-link">
+                        Sign in
+                    </Link>
                 </p>
             </div>
         </div>
