@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Check, Trash2 } from 'lucide-react';
+import { Plus, Check, Trash2, Clapperboard } from 'lucide-react';
 
 const MovieCard = ({ movie, onAction, isInWatchlist, isWatchlistPage }) => {
     const posterSrc = movie.poster_path
