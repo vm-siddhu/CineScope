@@ -24,10 +24,10 @@ function getCacheStats() {
 }
 
 // ─── Retry helper with exponential backoff ──────────────────────────────────
-// Retries on TMDB 429 (rate-limit) or 5xx errors up to maxRetries times.
-async function tmdbGet(url, params, maxRetries = 3, timeoutMs = 8000) {
+// Makes up to maxAttempts total requests for TMDB 429 or 5xx errors.
+async function tmdbGet(url, params, maxAttempts = 3, timeoutMs = 8000) {
     let lastError;
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
         try {
             const response = await axios.get(url, {
                 params: { api_key: process.env.TMDB_API_KEY, ...params },
@@ -52,13 +52,18 @@ async function tmdbGet(url, params, maxRetries = 3, timeoutMs = 8000) {
 
 // ─── Search Movies (TMDB) ────────────────────────────────────────────────────
 router.get('/search', async (req, res) => {
+    const query = typeof req.query.query === 'string' ? req.query.query.trim() : '';
+    if (!query) {
+        return res.status(400).json({ message: 'Search query is required' });
+    }
+
     try {
-        const { query } = req.query;
         // query is passed as a structured param — axios handles encoding safely.
         const response = await tmdbGet(`${TMDB_BASE_URL}/search/movie`, { query });
         res.json(response.data);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('TMDB search failed:', error.message);
+        res.status(error.code === 'ECONNABORTED' ? 504 : 502).json({ error: 'Movie search is temporarily unavailable' });
     }
 });
 
@@ -79,12 +84,17 @@ router.get('/popular', async (req, res) => {
         cache.set(cacheKey, response.data);
         res.json(response.data);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('TMDB popular movies request failed:', error.message);
+        res.status(error.code === 'ECONNABORTED' ? 504 : 502).json({ error: 'Popular movies are temporarily unavailable' });
     }
 });
 
 // ─── Movie Details (TMDB) — Cached ──────────────────────────────────────────
 router.get('/details/:id', async (req, res) => {
+    if (!/^\d+$/.test(req.params.id) || Number(req.params.id) < 1) {
+        return res.status(400).json({ message: 'Movie ID must be a positive integer' });
+    }
+
     const cacheKey = `details:${req.params.id}`;
     const cached = cache.get(cacheKey);
     if (cached) {
@@ -103,7 +113,8 @@ router.get('/details/:id', async (req, res) => {
         cache.set(cacheKey, response.data);
         res.json(response.data);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('TMDB movie details request failed:', error.message);
+        res.status(error.code === 'ECONNABORTED' ? 504 : 502).json({ error: 'Movie details are temporarily unavailable' });
     }
 });
 
@@ -113,13 +124,13 @@ router.get('/watchlist', auth, async (req, res) => {
         const movies = await Movie.find({ userId: req.user });
         res.json(movies);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Watchlist read failed:', error);
+        res.status(500).json({ error: 'Unable to load watchlist' });
     }
 });
 
 // ─── Watchlist — Add ─────────────────────────────────────────────────────────
-// The application-level duplicate check is kept as a fast path, but the DB
-// compound unique index is the real safety net against race conditions.
+// The compound unique index rejects duplicates, including concurrent inserts.
 router.post('/watchlist', auth, async (req, res) => {
     try {
         const { tmdbId, title, poster, overview, rating, year } = req.body;
@@ -136,17 +147,26 @@ router.post('/watchlist', auth, async (req, res) => {
         if (error.code === 11000) {
             return res.status(409).json({ message: 'Movie already in watchlist' });
         }
-        res.status(500).json({ error: error.message });
+        if (error.name === 'ValidationError' || error.name === 'CastError') {
+            return res.status(400).json({ message: 'Movie data is invalid' });
+        }
+        console.error('Watchlist add failed:', error);
+        res.status(500).json({ error: 'Unable to add movie to watchlist' });
     }
 });
 
 // ─── Watchlist — Remove ──────────────────────────────────────────────────────
 router.delete('/watchlist/:id', auth, async (req, res) => {
+    if (!/^\d+$/.test(req.params.id) || Number(req.params.id) < 1) {
+        return res.status(400).json({ message: 'Movie ID must be a positive integer' });
+    }
+
     try {
         await Movie.findOneAndDelete({ userId: req.user, tmdbId: req.params.id });
         res.json({ message: 'Removed from watchlist' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Watchlist removal failed:', error);
+        res.status(500).json({ error: 'Unable to remove movie from watchlist' });
     }
 });
 

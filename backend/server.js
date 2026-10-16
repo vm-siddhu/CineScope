@@ -5,12 +5,19 @@ dotenv.config();
 const { createApp } = require('./app');
 
 const app = createApp();
-
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB connection error:', err));
-
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+
+async function startServer() {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log('Connected to MongoDB');
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('MongoDB connection failed:', error.message);
+        process.exitCode = 1;
+    }
+}
+
+startServer();

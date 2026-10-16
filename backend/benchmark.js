@@ -17,38 +17,38 @@ dotenv.config();
 const Movie = require('./models/Movie');
 
 async function run() {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB\n');
+    let indexDropped = false;
+    try {
+        await mongoose.connect(process.env.MONGODB_URI);
+        await Movie.init();
+        console.log('Connected to MongoDB\n');
 
-    // Pick a real userId that exists in the collection
-    const sample = await Movie.findOne({});
-    if (!sample) {
-        console.error('No documents found. Run `node seed.js --clean` first.');
-        process.exit(1);
+        // Pick a real userId that exists in the collection.
+        const sample = await Movie.findOne({});
+        if (!sample) {
+            throw new Error('No documents found. Seed a disposable benchmark database first.');
+        }
+        const { userId, tmdbId } = sample;
+
+        console.log('=== WITH compound index { userId: 1, tmdbId: 1 } ===');
+        const withIndex = await Movie.find({ userId, tmdbId }).explain('executionStats');
+        printStats(withIndex);
+
+        console.log('\n=== WITHOUT compound index (collection scan) ===');
+        await Movie.collection.dropIndex('userId_1_tmdbId_1');
+        indexDropped = true;
+        const withoutIndex = await Movie.find({ userId, tmdbId }).explain('executionStats');
+        printStats(withoutIndex);
+    } finally {
+        // Restore the correctness constraint even if explain() fails.
+        if (indexDropped) {
+            await Movie.collection.createIndex({ userId: 1, tmdbId: 1 }, { unique: true });
+            console.log('\nIndex recreated');
+        }
+        if (mongoose.connection.readyState !== 0) {
+            await mongoose.disconnect();
+        }
     }
-    const { userId, tmdbId } = sample;
-
-    // ── Step 1: With the compound index (default state after model loads) ──
-    console.log('=== WITH compound index { userId: 1, tmdbId: 1 } ===');
-    const withIndex = await Movie.find({ userId, tmdbId })
-        .explain('executionStats');
-    printStats(withIndex);
-
-    // ── Step 2: Drop the compound index temporarily, re-run ──
-    console.log('\n=== WITHOUT compound index (collection scan) ===');
-    await Movie.collection.dropIndex('userId_1_tmdbId_1').catch(() => {
-        console.warn('Index not found — skipping drop (may already be absent)');
-    });
-
-    const withoutIndex = await Movie.find({ userId, tmdbId })
-        .explain('executionStats');
-    printStats(withoutIndex);
-
-    // ── Step 3: Recreate the index so the app keeps working ──
-    await Movie.collection.createIndex({ userId: 1, tmdbId: 1 }, { unique: true });
-    console.log('\nIndex recreated ✓');
-
-    await mongoose.disconnect();
 }
 
 function printStats(explainResult) {

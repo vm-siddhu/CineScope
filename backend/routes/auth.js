@@ -45,7 +45,16 @@ router.post('/register', registerValidation, async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({ name, email, password: hashedPassword });
-        const savedUser = await newUser.save();
+        let savedUser;
+        try {
+            savedUser = await newUser.save();
+        } catch (error) {
+            // The unique index is the final guard when two registrations race.
+            if (error.code === 11000) {
+                return res.status(409).json({ message: 'User already exists' });
+            }
+            throw error;
+        }
 
         // Short-lived token: expires in 1 hour
         const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -54,7 +63,8 @@ router.post('/register', registerValidation, async (req, res) => {
             user: { id: savedUser._id, name: savedUser.name, email: savedUser.email }
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Registration failed:', error);
+        res.status(500).json({ error: 'Unable to register at this time' });
     }
 });
 
@@ -86,7 +96,8 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
             user: { id: user._id, name: user.name, email: user.email }
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Login failed:', error);
+        res.status(500).json({ error: 'Unable to log in at this time' });
     }
 });
 

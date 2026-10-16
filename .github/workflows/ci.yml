@@ -1,4 +1,4 @@
-name: CI — Jest Tests
+name: CI
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main, master]
 
 jobs:
-  test:
+  backend-tests:
     runs-on: ubuntu-latest
 
     defaults:
@@ -33,3 +33,28 @@ jobs:
         env:
           # Use repo secret if set, otherwise fall back to a CI-only placeholder.
           JWT_SECRET: ${{ secrets.JWT_SECRET != '' && secrets.JWT_SECRET || 'ci-test-secret-key' }}
+
+  frontend-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint frontend
+        run: npm run lint
+
+      - name: Build frontend
+        run: npm run build

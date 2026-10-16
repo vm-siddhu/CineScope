@@ -62,6 +62,20 @@ describe('Auth middleware', () => {
             .set('Authorization', `Bearer ${expiredToken}`);
         expect(res.status).toBe(401);
     });
+
+    it('returns a safe server error when JWT_SECRET is not configured', async () => {
+        const configuredSecret = process.env.JWT_SECRET;
+        delete process.env.JWT_SECRET;
+        try {
+            const res = await request(app)
+                .get('/api/movies/watchlist')
+                .set('Authorization', 'Bearer invalid-token');
+            expect(res.status).toBe(500);
+            expect(res.body).toEqual({ error: 'Authentication is not configured' });
+        } finally {
+            process.env.JWT_SECRET = configuredSecret;
+        }
+    });
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -109,6 +123,16 @@ describe('POST /api/movies/watchlist', () => {
             .post('/api/movies/watchlist')
             .send(movie);
         expect(res.status).toBe(401);
+    });
+
+    it('returns 400 when required movie data is missing', async () => {
+        const res = await request(app)
+            .post('/api/movies/watchlist')
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({ tmdbId: 55 });
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('Movie data is invalid');
     });
 });
 
@@ -184,5 +208,27 @@ describe('DELETE /api/movies/watchlist/:id', () => {
             .set('Authorization', `Bearer ${authToken}`);
 
         expect(list.body).toHaveLength(0);
+    });
+
+    it('does not remove another user\'s movie', async () => {
+        const added = await request(app)
+            .post('/api/movies/watchlist')
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({ tmdbId: 43, title: 'Keep this', poster: null, overview: '', rating: 5, year: '2021' });
+
+        const otherUser = await request(app)
+            .post('/api/auth/register')
+            .send({ name: 'Other', email: 'other@example.com', password: 'password123' });
+        const del = await request(app)
+            .delete('/api/movies/watchlist/43')
+            .set('Authorization', `Bearer ${otherUser.body.token}`);
+        const list = await request(app)
+            .get('/api/movies/watchlist')
+            .set('Authorization', `Bearer ${authToken}`);
+
+        expect(added.status).toBe(201);
+        expect(del.status).toBe(200);
+        expect(list.body).toHaveLength(1);
+        expect(list.body[0].title).toBe('Keep this');
     });
 });

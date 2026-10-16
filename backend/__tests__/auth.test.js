@@ -66,6 +66,16 @@ describe('POST /api/auth/register', () => {
         expect(res.status).toBe(409);
     });
 
+    it('allows only one of two concurrent registrations for the same email', async () => {
+        const payload = { name: 'Race', email: 'race@example.com', password: 'password123' };
+        const responses = await Promise.all([
+            request(app).post('/api/auth/register').send(payload),
+            request(app).post('/api/auth/register').send(payload)
+        ]);
+
+        expect(responses.map(response => response.status).sort()).toEqual([201, 409]);
+    });
+
     it('returns a token that includes an exp claim (short-lived)', async () => {
         const res = await request(app)
             .post('/api/auth/register')

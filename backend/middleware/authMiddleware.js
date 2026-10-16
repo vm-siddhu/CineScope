@@ -5,6 +5,10 @@ const jwt = require('jsonwebtoken');
  * Returns 401 (not 500) for missing, expired, or invalid tokens.
  */
 const auth = (req, res, next) => {
+    if (!process.env.JWT_SECRET) {
+        return res.status(500).json({ error: 'Authentication is not configured' });
+    }
+
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
 
@@ -24,7 +28,8 @@ const auth = (req, res, next) => {
         req.user = verified.id;
         next();
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Authentication middleware failed:', error);
+        res.status(500).json({ error: 'Authentication could not be completed' });
     }
 };
 
