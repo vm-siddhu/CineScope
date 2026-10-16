@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import AuthContext from '../context/AuthContextValue';
 import { Clapperboard, Menu, X } from 'lucide-react';
 
 const Navbar = () => {

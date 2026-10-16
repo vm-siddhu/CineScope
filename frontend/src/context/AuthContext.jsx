@@ -1,6 +1,5 @@
-import React, { createContext, useState, useEffect } from 'react';
-
-export const AuthContext = createContext();
+import React, { useState } from 'react';
+import AuthContext from './AuthContextValue';
 
 /**
  * Decode a JWT payload without verifying the signature.
@@ -29,22 +28,25 @@ function isTokenValid(token) {
     return payload.exp * 1000 > Date.now();
 }
 
-export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        const token = localStorage.getItem('token');
-        if (storedUser && isTokenValid(token)) {
-            setUser(JSON.parse(storedUser));
-        } else {
-            // Token is absent or expired — clear stale data.
-            localStorage.removeItem('user');
-            localStorage.removeItem('token');
+function getStoredUser() {
+    const storedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    if (storedUser && isTokenValid(token)) {
+        try {
+            return JSON.parse(storedUser);
+        } catch {
+            // Clear malformed persisted state and show the logged-out UI.
         }
-        setLoading(false);
-    }, []);
+    }
+
+    // Token is absent/expired or stored user data is malformed.
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    return null;
+}
+
+export const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(getStoredUser);
 
     const login = (userData, token) => {
         setUser(userData);
@@ -59,7 +61,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout }}>
+        <AuthContext.Provider value={{ user, loading: false, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

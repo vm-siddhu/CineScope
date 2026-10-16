@@ -2,7 +2,7 @@ import React, { useState, useContext, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import api from '../utils/api';
-import { AuthContext } from '../context/AuthContext';
+import AuthContext from '../context/AuthContextValue';
 import { toastSuccess } from '../utils/toast';
 
 /** Simple password strength scorer (0 – 4). */

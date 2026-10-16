@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
 import api from '../utils/api';
 import MovieCard from '../components/MovieCard';
@@ -13,89 +13,72 @@ const Home = () => {
     const [error, setError] = useState('');
     const [addedMovieIds, setAddedMovieIds] = useState([]);
 
-    // Keep a ref to the current AbortController so we can cancel stale requests.
+    // Search requests and timers are invalidated as soon as the query changes.
     const abortRef = useRef(null);
-    // Timer ref for debouncing
     const debounceTimer = useRef(null);
+    const requestIdRef = useRef(0);
 
     useEffect(() => {
-        fetchInitialData();
-        // Cleanup: cancel any in-flight request when the component unmounts.
-        return () => abortRef.current?.abort();
+        const loadWatchlistIds = async () => {
+            try {
+                const res = await api.get('/movies/watchlist');
+                setAddedMovieIds(res.data.map(movie => movie.tmdbId));
+            } catch (err) {
+                if (err.name !== 'CanceledError') {
+                    console.error('Failed to fetch watchlist IDs:', err);
+                }
+            }
+        };
+        loadWatchlistIds();
     }, []);
 
-    const fetchInitialData = async () => {
-        await Promise.all([fetchPopularMovies(), fetchWatchlistIds()]);
-    };
+    useEffect(() => {
+        const requestId = ++requestIdRef.current;
+        const controller = new AbortController();
+        abortRef.current?.abort();
+        abortRef.current = controller;
+        const query = searchQuery.trim();
 
-    const fetchWatchlistIds = async () => {
-        try {
-            const res = await api.get('/movies/watchlist');
-            const ids = res.data.map(m => m.tmdbId);
-            setAddedMovieIds(ids);
-        } catch (err) {
-            if (err.name !== 'CanceledError') {
-                console.error('Failed to fetch watchlist IDs:', err);
-            }
-        }
-    };
-
-    const fetchPopularMovies = async () => {
-        try {
-            setLoading(true);
-            setError('');
-            const res = await api.get('/movies/popular');
-            setMovies(res.data.results || []);
-        } catch (err) {
-            if (err.name !== 'CanceledError') {
-                console.error('Fetch error:', err);
-                setError('Unable to load movies. Please check your connection.');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    /**
-     * Debounced live search.
-     * - Cancels the previous in-flight request with AbortController.
-     * - Uses encodeURIComponent via the axios `params` object (automatic encoding).
-     */
-    const handleSearchChange = useCallback((e) => {
-        const value = e.target.value;
-        setSearchQuery(value);
-
-        // Clear any pending debounce timer
-        clearTimeout(debounceTimer.current);
-
-        if (!value.trim()) {
-            fetchPopularMovies();
-            return;
-        }
-
-        debounceTimer.current = setTimeout(async () => {
-            // Cancel the previous request if still in-flight
-            abortRef.current?.abort();
-            abortRef.current = new AbortController();
-
+        const loadMovies = async () => {
             try {
-                setLoading(true);
-                const res = await api.get('/movies/search', {
-                    // Passing `query` as a param object — axios calls
-                    // encodeURIComponent automatically, so & and # are safe.
-                    params: { query: value },
-                    signal: abortRef.current.signal
-                });
-                setMovies(res.data.results || []);
+                const endpoint = query ? '/movies/search' : '/movies/popular';
+                const options = query
+                    ? { params: { query }, signal: controller.signal }
+                    : { signal: controller.signal };
+                const res = await api.get(endpoint, options);
+                if (requestId === requestIdRef.current) {
+                    setMovies(res.data.results || []);
+                }
             } catch (err) {
-                if (err.name !== 'CanceledError' && err.code !== 'ERR_CANCELED') {
-                    console.error(err);
+                if (err.name !== 'CanceledError' && err.code !== 'ERR_CANCELED' && requestId === requestIdRef.current) {
+                    console.error('Movie request failed:', err);
+                    setError('Unable to load movies. Please check your connection.');
                 }
             } finally {
-                setLoading(false);
+                if (requestId === requestIdRef.current) setLoading(false);
             }
-        }, DEBOUNCE_MS);
-    }, []);
+        };
+
+        if (query) {
+            debounceTimer.current = setTimeout(loadMovies, DEBOUNCE_MS);
+        } else {
+            loadMovies();
+        }
+
+        return () => {
+            clearTimeout(debounceTimer.current);
+            controller.abort();
+        };
+    }, [searchQuery]);
+
+    const handleSearchChange = (event) => {
+        clearTimeout(debounceTimer.current);
+        abortRef.current?.abort();
+        requestIdRef.current += 1;
+        setLoading(true);
+        setError('');
+        setSearchQuery(event.target.value);
+    };
 
     const addToWatchlist = async (movie) => {
         if (addedMovieIds.includes(movie.id)) return;
