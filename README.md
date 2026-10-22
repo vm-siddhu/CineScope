@@ -28,6 +28,18 @@ flowchart LR
 
 See [Architecture](docs/ARCHITECTURE.md) for request flows, data/index details, security decisions, and trade-offs. [Interview Guide](docs/INTERVIEW_GUIDE.md) contains source-grounded questions and walkthroughs.
 
+## Live demo and screenshots
+
+Try the [CineScope live demo](https://cinescope-1-kmoz.onrender.com/). The frontend and backend are hosted on Render; the backend health check is available at <https://cinescope-8m6a.onrender.com/>.
+
+### Sign in
+
+![CineScope sign-in screen](frontend/public/screenshots/login.png)
+
+### Create an account
+
+![CineScope account registration screen](frontend/public/screenshots/register.png)
+
 ## Setup
 
 Requirements: Node.js 20 or newer, npm, MongoDB, and a TMDB API key.
@@ -87,4 +99,4 @@ The backend tests use an in-memory MongoDB binary and do not require your applic
 
 The cache is local to one Node process and is lost on restart. Search responses are not cached. JWTs are stored in browser local storage, so an XSS vulnerability could expose them. CORS currently allows all origins. Cache statistics are process-local and unauthenticated. These choices keep the student project small; a deployed version should configure allowed origins, use a safer token/session strategy, and use shared cache/metrics if it runs on multiple instances.
 
-Possible next steps include pagination, stronger field validation, account recovery, browser-level tests, and deploying with managed MongoDB and secrets configuration. No live demo or screenshots are included because none are tracked in this repository.
+Possible next steps include pagination, stronger field validation, account recovery, browser-level tests, and documenting the managed database and secrets configuration used by the live deployment.
