@@ -23,7 +23,9 @@ function getStoredUser() {
     if (storedUser && isTokenValid(token)) {
         try {
             return JSON.parse(storedUser);
-        } catch {}
+        } catch {
+            return null;
+        }
     }
 
     localStorage.removeItem('user');

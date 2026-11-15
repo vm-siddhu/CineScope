@@ -98,7 +98,7 @@ const MovieDetail = () => {
                 setSavedMovie({ tmdbId: movie.id, status: 'watched', personalReaction: null });
             }
             toastSuccess('Marked as watched!');
-        } catch (err) {
+        } catch {
             toastError('Could not update. Try again.');
         } finally {
             setLibLoading(false);
@@ -128,7 +128,7 @@ const MovieDetail = () => {
                 setSavedMovie(prev => ({ ...prev, personalReaction: reaction }));
             }
             toastSuccess('Reaction saved!');
-        } catch (err) {
+        } catch {
             toastError('Could not save reaction. Try again.');
         } finally {
             setLibLoading(false);

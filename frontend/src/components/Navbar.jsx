@@ -14,19 +14,22 @@ const Navbar = () => {
     const dropdownRef = useRef(null);
 
     useEffect(() => {
-        if (!user) {
-            setCounts({ watched: 0, watchlist: 0 });
-            return;
-        }
+        if (!user) return;
+        let cancelled = false;
         api.get('/user/hub')
             .then(res => {
-                setCounts({
-                    watched: res.data?.tasteAnalytics?.watchedCount || 0,
-                    watchlist: res.data?.tasteAnalytics?.wantToWatchCount || 0
-                });
+                if (!cancelled) {
+                    setCounts({
+                        watched: res.data?.tasteAnalytics?.watchedCount || 0,
+                        watchlist: res.data?.tasteAnalytics?.wantToWatchCount || 0
+                    });
+                }
             })
             .catch(() => {});
+        return () => { cancelled = true; };
     }, [user, location.pathname]);
+
+    const displayCounts = user ? counts : { watched: 0, watchlist: 0 };
 
     useEffect(() => {
         const handleClick = (e) => {
@@ -93,10 +96,10 @@ const Navbar = () => {
                                                 <p className="text-xs text-brand-muted truncate">{user.email}</p>
                                                 <div className="flex gap-3 mt-2">
                                                     <span className="text-[11px] text-slate-400">
-                                                        <span className="text-white font-medium">{counts.watched}</span> watched
+                                                        <span className="text-white font-medium">{displayCounts.watched}</span> watched
                                                     </span>
                                                     <span className="text-[11px] text-slate-400">
-                                                        <span className="text-white font-medium">{counts.watchlist}</span> in watchlist
+                                                        <span className="text-white font-medium">{displayCounts.watchlist}</span> in watchlist
                                                     </span>
                                                 </div>
                                             </div>
@@ -143,8 +146,8 @@ const Navbar = () => {
                                     Signed in as <span className="text-white font-medium">{user.name}</span>
                                     <div className="text-xs mt-0.5 text-slate-500">{user.email}</div>
                                     <div className="flex gap-3 mt-1 text-xs">
-                                        <span><span className="text-white font-medium">{counts.watched}</span> watched</span>
-                                        <span><span className="text-white font-medium">{counts.watchlist}</span> watchlist</span>
+                                        <span><span className="text-white font-medium">{displayCounts.watched}</span> watched</span>
+                                        <span><span className="text-white font-medium">{displayCounts.watchlist}</span> watchlist</span>
                                     </div>
                                 </div>
                                 {navLink('/', 'Home')}
