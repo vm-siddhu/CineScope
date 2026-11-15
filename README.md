@@ -45,7 +45,6 @@ CineScope 2.0 answers three critical questions for any film:
 - JWT-authenticated personal library with dual states: **Want to Watch** and **Watched**.
 - Post-viewing reaction tracking: **Worth It**, **Meh**, or **Skip**.
 - **Taste Analytics**: Automatic genre frequency calculation highlighting the user's top preferences.
-- **Tonight's Pick**: Smart randomized recommendation engine prioritizing unviewed titles matching favorite genres.
 - **Recent AI Verdicts**: History tracking of the user's last 10 AI verdict lookups.
 
 ---
@@ -105,7 +104,7 @@ flowchart TD
 ### Personal Cinema Hub
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `GET` | `/api/user/hub` | Bearer JWT | Fetch user library, taste analytics, tonight's pick, and verdict history |
+| `GET` | `/api/user/hub` | Bearer JWT | Fetch user library, taste analytics, and recent verdict history |
 | `POST` | `/api/user/movies` | Bearer JWT | Add or update a movie in user's library |
 | `PATCH` | `/api/user/movies/:tmdbId` | Bearer JWT | Update status (`want_to_watch`/`watched`) or personal reaction |
 | `DELETE` | `/api/user/movies/:tmdbId` | Bearer JWT | Remove a movie from personal library |
