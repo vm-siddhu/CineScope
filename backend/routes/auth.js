@@ -6,17 +6,14 @@ const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 
-// ─── Rate Limiter ────────────────────────────────────────────────────────────
-// Max 10 login attempts per 15 minutes per IP.
 const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 15 * 60 * 1000,
     max: 10,
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: 'Too many login attempts. Please try again after 15 minutes.' }
 });
 
-// ─── Validation rules ────────────────────────────────────────────────────────
 const registerValidation = [
     body('name').trim().notEmpty().withMessage('Name is required'),
     body('email').isEmail().normalizeEmail().withMessage('A valid email is required'),
@@ -28,7 +25,6 @@ const loginValidation = [
     body('password').notEmpty().withMessage('Password is required')
 ];
 
-// ─── Register ────────────────────────────────────────────────────────────────
 router.post('/register', registerValidation, async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -49,14 +45,12 @@ router.post('/register', registerValidation, async (req, res) => {
         try {
             savedUser = await newUser.save();
         } catch (error) {
-            // The unique index is the final guard when two registrations race.
             if (error.code === 11000) {
                 return res.status(409).json({ message: 'User already exists' });
             }
             throw error;
         }
 
-        // Short-lived token: expires in 1 hour
         const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.status(201).json({
             token,
@@ -68,7 +62,6 @@ router.post('/register', registerValidation, async (req, res) => {
     }
 });
 
-// ─── Login ───────────────────────────────────────────────────────────────────
 router.post('/login', loginLimiter, loginValidation, async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -80,7 +73,6 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user) {
-            // Use a generic message to avoid user-enumeration
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
@@ -89,7 +81,6 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // Short-lived token: expires in 1 hour
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.json({
             token,

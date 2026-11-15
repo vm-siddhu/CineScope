@@ -15,7 +15,6 @@ const MovieCard = ({ movie, onAction, isInWatchlist, isWatchlistPage }) => {
 
     return (
         <div className="group flex flex-col bg-brand-card rounded-xl overflow-hidden border border-brand-border hover:border-slate-600 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-brand-primary/5">
-            {/* Poster */}
             <Link
                 to={`/movie/${movie.id || movie.tmdbId}`}
                 className="relative aspect-[2/3] overflow-hidden bg-brand-surface"
@@ -33,7 +32,6 @@ const MovieCard = ({ movie, onAction, isInWatchlist, isWatchlistPage }) => {
                     </div>
                 )}
 
-                {/* Rating badge */}
                 {rating != null && (
                     <div className="absolute top-2 right-2 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-lg text-xs font-semibold text-yellow-400 flex items-center gap-1">
                         <svg className="w-3 h-3 fill-current" viewBox="0 0 20 20">
@@ -43,18 +41,13 @@ const MovieCard = ({ movie, onAction, isInWatchlist, isWatchlistPage }) => {
                     </div>
                 )}
 
-                {/* Hover overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
                     <span className="text-xs font-medium text-white/90">View Details →</span>
                 </div>
             </Link>
 
-            {/* Info */}
             <div className="flex flex-col flex-1 p-3.5">
-                <h3
-                    className="text-sm font-semibold text-brand-text line-clamp-1 mb-0.5"
-                    title={movie.title}
-                >
+                <h3 className="text-sm font-semibold text-brand-text line-clamp-1 mb-0.5" title={movie.title}>
                     {movie.title}
                 </h3>
                 <p className="text-xs text-brand-muted mb-3">{year || '—'}</p>
@@ -63,9 +56,7 @@ const MovieCard = ({ movie, onAction, isInWatchlist, isWatchlistPage }) => {
                     {isWatchlistPage ? (
                         <button
                             onClick={() => onAction(movie)}
-                            className="w-full py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer
-                            bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30
-                            flex items-center justify-center gap-1.5"
+                            className="w-full py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 flex items-center justify-center gap-1.5"
                         >
                             <Trash2 size={13} />
                             Remove
@@ -73,9 +64,7 @@ const MovieCard = ({ movie, onAction, isInWatchlist, isWatchlistPage }) => {
                     ) : isInWatchlist ? (
                         <button
                             onClick={() => onAction(movie)}
-                            className="w-full py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer
-                            bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400
-                            flex items-center justify-center gap-1.5 group/btn"
+                            className="w-full py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 flex items-center justify-center gap-1.5 group/btn"
                         >
                             <Check size={13} className="group-hover/btn:hidden" />
                             <Trash2 size={13} className="hidden group-hover/btn:block" />
@@ -85,9 +74,7 @@ const MovieCard = ({ movie, onAction, isInWatchlist, isWatchlistPage }) => {
                     ) : (
                         <button
                             onClick={() => onAction(movie)}
-                            className="w-full py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer
-                            bg-brand-primary/10 border border-brand-primary/20 text-brand-primary hover:bg-brand-primary hover:text-white
-                            flex items-center justify-center gap-1.5"
+                            className="w-full py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer bg-brand-primary/10 border border-brand-primary/20 text-brand-primary hover:bg-brand-primary hover:text-white flex items-center justify-center gap-1.5"
                         >
                             <Plus size={13} />
                             Add to Watchlist

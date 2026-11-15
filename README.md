@@ -1,102 +1,188 @@
-# CineScope
+# CineScope 2.0
 
-CineScope is a movie discovery and personal watchlist app. Users can register, browse popular titles, search TMDB, view movie details and trailers, and save or remove movies from a private watchlist.
+> **A Movie Discovery, Decision, and Intelligence Platform powered by MERN Stack and Google Gemini Grounded AI.**
 
-## Features
+CineScope 2.0 answers three critical questions for any film:
+1. **Should I watch this movie?**
+2. **Why is it worth watching or skipping?** (Audience consensus, strengths, and criticisms without spoilers)
+3. **Where can I actually watch it in India?** (Indian OTT platform availability)
 
-- Email/password registration and login with bcrypt password hashing and one-hour JWTs.
-- Protected React routes and per-user watchlist operations.
-- TMDB search, popular movies, and details through the backend proxy.
-- Seven-minute in-memory caching for popular and details responses.
-- Debounced search with cancellation of superseded browser requests.
-- Duplicate watchlist protection with a MongoDB compound unique index.
+---
 
-## Stack
+## 🌟 Key Features
 
-React 19, Vite 7, Tailwind CSS 4, Axios, Node.js, Express 4, Mongoose 8, MongoDB, TMDB API, Jest, Supertest, and `mongodb-memory-server`.
+### 1. Movie Discovery via TMDB
+- Real-time movie search with debounced inputs and request cancellation for superseded queries.
+- Trending and popular movie discovery with 7-minute in-memory server caching.
+- In-depth movie metadata: synopsis, release year, runtime, ratings, cast, budget, revenue, and production studios.
 
-## Architecture
+### 2. Official Trailers & Clips
+- Powered by TMDB Video API with official YouTube privacy-enhanced embeds (`youtube-nocookie.com`).
+- Tabbed interface separating **Official Trailers** from **Teasers & Clips**.
+- 16:9 responsive video player with fallback states when media is unavailable.
+
+### 3. Gemini-Grounded Audience & News Pulse
+- Solves the cold-start problem of empty user reviews on new platforms by analyzing publicly available web sentiment.
+- Powered by **Google Gemini 3.8 Flash** via the `@google/genai` SDK with **Google Search Grounding**.
+- Analyzes authentic public sentiment across X (Twitter), Reddit, and entertainment news while filtering out bot spam, promotional hype, and plot spoilers.
+- Provides an **Organic Sentiment Score (0–100)**, **Verdict Badge** (*Must Watch*, *Sleeper Hit*, *Mixed / Niche*, *Overhyped*, *Skip*), **Praised For** & **Criticized For** highlights, and verified citation sources.
+- **MongoDB 24-hour TTL caching** prevents redundant AI calls and delivers near-instant repeat responses.
+- In-process deduplication prevents concurrent requests from duplicating Gemini calls.
+
+### 4. Indian OTT Availability
+- Powered by TMDB watch providers for the Indian region (`IN`).
+- Categorized into **Stream**, **Rent**, and **Buy** options with official platform logos.
+- Direct search links to leading Indian streaming platforms:
+  - **Netflix**
+  - **Amazon Prime Video**
+  - **JioHotstar / Disney+ Hotstar**
+  - **SonyLIV**
+  - **ZEE5**
+  - **Apple TV**
+- JustWatch regional link fallback for complete coverage.
+
+### 5. Personal Cinema Hub
+- JWT-authenticated personal library with dual states: **Want to Watch** and **Watched**.
+- Post-viewing reaction tracking: **Worth It**, **Meh**, or **Skip**.
+- **Taste Analytics**: Automatic genre frequency calculation highlighting the user's top preferences.
+- **Tonight's Pick**: Smart randomized recommendation engine prioritizing unviewed titles matching favorite genres.
+- **Recent AI Verdicts**: History tracking of the user's last 10 AI verdict lookups.
+
+---
+
+## 🏗️ Architecture
 
 ```mermaid
-flowchart LR
-  Browser[React + Vite] -->|Axios /api| Express[Express API]
-  Express --> Auth[JWT auth and validation]
-  Express -->|User and watchlist queries| Mongo[(MongoDB)]
-  Express -->|API key stays server side| TMDB[TMDB API]
-  Express --> Cache[In-process NodeCache]
+flowchart TD
+    Client["React 19 + Tailwind CSS Frontend"]
+    Server["Express.js REST API"]
+    DB[(MongoDB Database)]
+    TMDB["TMDB REST API"]
+    Gemini["Google Gemini 3.8 Flash"]
+    Search["Google Search Grounding"]
+
+    Client -->|Axios HTTP Requests| Server
+    Server -->|JWT Auth & Validation| Server
+    Server -->|User & Hub Data| DB
+    Server -->|Verdict Cache & TTL Index| DB
+    Server -->|Movie Metadata, Videos, Providers| TMDB
+    Server -->|Grounded Sentiment Analysis| Gemini
+    Gemini <-->|Live Audience & News Web Search| Search
 ```
 
-See [Architecture](docs/ARCHITECTURE.md) for request flows, data/index details, security decisions, and trade-offs. [Interview Guide](docs/INTERVIEW_GUIDE.md) contains source-grounded questions and walkthroughs.
+---
 
-## Live demo and screenshots
+## 🛠️ Technology Stack
 
-Try the [CineScope live demo](https://cinescope-1-kmoz.onrender.com/). The frontend and backend are hosted on Render; the backend health check is available at <https://cinescope-8m6a.onrender.com/>.
+| Layer | Technology |
+|---|---|
+| **Frontend** | React 19, Tailwind CSS 4, Vite 7, React Router 7, Axios, Lucide Icons, React Hot Toast |
+| **Backend** | Node.js, Express.js 4, MongoDB, Mongoose 8, JWT, bcryptjs, express-rate-limit, express-validator |
+| **AI & Grounding** | Google Gemini API (`@google/genai`), Google Search Grounding tool |
+| **External APIs** | The Movie Database (TMDB) API |
+| **Testing** | Jest, Supertest, MongoDB Memory Server |
 
-### Sign in
+---
 
-![CineScope sign-in screen](frontend/public/screenshots/login.png)
+## 📡 REST API Reference
 
-### Create an account
-
-![CineScope account registration screen](frontend/public/screenshots/register.png)
-
-## Setup
-
-Requirements: Node.js 20 or newer, npm, MongoDB, and a TMDB API key.
-
-Create `backend/.env` from [`backend/.env.example`](backend/.env.example) and `frontend/.env` from [`frontend/.env.example`](frontend/.env.example). Fill in local values; never commit either `.env` file. `VITE_API_BASE_URL` is public frontend configuration and must point to the backend. `TMDB_API_KEY`, `JWT_SECRET`, and `MONGODB_URI` belong only in the backend environment.
-
-```powershell
-cd backend
-npm ci
-npm run dev
-```
-
-In another terminal:
-
-```powershell
-cd frontend
-npm ci
-npm run dev
-```
-
-The backend defaults to port `5000`; Vite defaults to `5173`. MongoDB must be running and reachable through `MONGODB_URI`.
-
-## API
-
-| Method | Path | Auth | Purpose |
+### Authentication
+| Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| POST | `/api/auth/register` | No | Create account; returns token and user |
-| POST | `/api/auth/login` | No | Sign in; returns token and user |
-| GET | `/api/movies/search?query=...` | No | Search TMDB |
-| GET | `/api/movies/popular` | No | Popular TMDB titles (cached) |
-| GET | `/api/movies/details/:id` | No | Movie details, credits, and videos (cached) |
-| GET | `/api/movies/watchlist` | Bearer token | List the signed-in user's saved movies |
-| POST | `/api/movies/watchlist` | Bearer token | Add a movie; duplicate is `409` |
-| DELETE | `/api/movies/watchlist/:id` | Bearer token | Remove a movie by TMDB ID |
-| GET | `/api/movies/cache-stats` | No | Process-local cache hit/miss counters |
+| `POST` | `/api/auth/register` | Public | Register a new user account |
+| `POST` | `/api/auth/login` | Public | Authenticate user and receive 1-hour JWT |
 
-Successful response bodies are JSON. Auth validation errors use `400`, invalid credentials/tokens use `401`, duplicate registration/watchlist entries use `409`, upstream movie service failures use `502` or `504`, and unexpected database failures use `500` with a safe message.
+### Movies & Discovery
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/movies/search?query=...` | Public | Search movies by title on TMDB |
+| `GET` | `/api/movies/popular` | Public | Get popular movies (7-min server cache) |
+| `GET` | `/api/movies/details/:id` | Public | Get movie details, cast, and metadata |
+| `GET` | `/api/movies/:id/videos` | Public | Get trailers and clips filtered for YouTube |
+| `GET` | `/api/movies/:id/providers?title=...` | Public | Get Indian OTT streaming providers and search links |
+| `GET` | `/api/movies/:id/verdict?title=...&year=...` | Optional JWT | Get or generate Gemini-grounded audience verdict |
 
-## Checks and benchmark
+### Personal Cinema Hub
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/user/hub` | Bearer JWT | Fetch user library, taste analytics, tonight's pick, and verdict history |
+| `POST` | `/api/user/movies` | Bearer JWT | Add or update a movie in user's library |
+| `PATCH` | `/api/user/movies/:tmdbId` | Bearer JWT | Update status (`want_to_watch`/`watched`) or personal reaction |
+| `DELETE` | `/api/user/movies/:tmdbId` | Bearer JWT | Remove a movie from personal library |
+| `GET` | `/api/movies/watchlist` | Bearer JWT | Legacy watchlist fetch |
+| `POST` | `/api/movies/watchlist` | Bearer JWT | Legacy watchlist add |
+| `DELETE` | `/api/movies/watchlist/:id` | Bearer JWT | Legacy watchlist remove |
 
-```powershell
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- **Node.js** (v18 or higher)
+- **MongoDB** (local community server or MongoDB Atlas URI)
+- **TMDB API Key** ([themoviedb.org](https://www.themoviedb.org/documentation/api))
+- **Google Gemini API Key** ([aistudio.google.com](https://aistudio.google.com/))
+
+---
+
+### Installation & Setup
+
+#### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/cinescope.git
+cd cinescope
+```
+
+#### 2. Backend Configuration
+Create `backend/.env` based on `backend/.env.example`:
+```env
+PORT=5000
+MONGODB_URI=mongodb://127.0.0.1:27017/cinescope
+JWT_SECRET=your-secure-random-jwt-secret
+TMDB_API_KEY=your-tmdb-api-key
+GEMINI_API_KEY=your-google-gemini-api-key
+```
+
+Install backend dependencies and start development server:
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+#### 3. Frontend Configuration
+Create `frontend/.env` based on `frontend/.env.example`:
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+Install frontend dependencies and start Vite dev server:
+```bash
+cd ../frontend
+npm install
+npm run dev
+```
+
+The frontend will run at `http://localhost:5173` and the backend will run at `http://localhost:5000`.
+
+---
+
+## 🧪 Running Tests
+
+The backend test suite includes integration tests using `mongodb-memory-server` and mocked external services.
+
+```bash
 cd backend
 npm test
 ```
 
-```powershell
+To run frontend build checks:
+```bash
 cd frontend
-npm run lint
 npm run build
 ```
 
-The backend tests use an in-memory MongoDB binary and do not require your application database. CI runs backend tests and the frontend lint/build.
+---
 
-`backend/benchmark.js` compares MongoDB `explain('executionStats')` with and without the watchlist compound index. It temporarily drops and recreates that index. Run it only against a disposable benchmark database with seeded documents, never against production or a database where index state must not be changed. `backend/seed.js --clean` deletes the `movies` and `users` collections in its configured database; use a disposable database only. See [Architecture: index evidence](docs/ARCHITECTURE.md#database-index-and-complexity).
-
-## Limitations and next steps
-
-The cache is local to one Node process and is lost on restart. Search responses are not cached. JWTs are stored in browser local storage, so an XSS vulnerability could expose them. CORS currently allows all origins. Cache statistics are process-local and unauthenticated. These choices keep the student project small; a deployed version should configure allowed origins, use a safer token/session strategy, and use shared cache/metrics if it runs on multiple instances.
-
-Possible next steps include pagination, stronger field validation, account recovery, browser-level tests, and documenting the managed database and secrets configuration used by the live deployment.
+## 📄 License
+This project is open-source and available under the MIT License.

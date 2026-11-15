@@ -8,10 +8,10 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Watchlist from './pages/Watchlist';
 import MovieDetail from './pages/MovieDetail';
+import ProfileHub from './pages/ProfileHub';
 import './index.css';
 import { Toaster } from 'react-hot-toast';
 
-/** Redirect to home if already logged in */
 const GuestRoute = ({ children }) => {
     const { user, loading } = useContext(AuthContext);
     if (loading) {
@@ -25,7 +25,6 @@ const GuestRoute = ({ children }) => {
     return children;
 };
 
-/** Redirect to login if not authenticated */
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useContext(AuthContext);
     if (loading) {
@@ -39,7 +38,6 @@ const ProtectedRoute = ({ children }) => {
     return children;
 };
 
-/** Simple 404 page */
 const NotFound = () => (
     <div className="flex flex-col items-center justify-center py-32 text-center">
         <p className="text-6xl font-bold text-brand-primary mb-2">404</p>
@@ -54,16 +52,14 @@ function AppContent() {
             <Navbar />
             <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <Routes>
-                    {/* Auth pages — redirect away if already logged in */}
                     <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
                     <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
-                    {/* Protected pages */}
                     <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                     <Route path="/watchlist" element={<ProtectedRoute><Watchlist /></ProtectedRoute>} />
                     <Route path="/movie/:id" element={<ProtectedRoute><MovieDetail /></ProtectedRoute>} />
+                    <Route path="/profile" element={<ProtectedRoute><ProfileHub /></ProtectedRoute>} />
 
-                    {/* 404 */}
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </main>

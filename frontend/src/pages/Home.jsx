@@ -13,7 +13,6 @@ const Home = () => {
     const [error, setError] = useState('');
     const [addedMovieIds, setAddedMovieIds] = useState([]);
 
-    // Search requests and timers are invalidated as soon as the query changes.
     const abortRef = useRef(null);
     const debounceTimer = useRef(null);
     const requestIdRef = useRef(0);
@@ -95,7 +94,6 @@ const Home = () => {
             toastSuccess('Added to watchlist');
         } catch (err) {
             if (err.response?.status === 409) {
-                // Already in watchlist (race-condition caught by DB index)
                 setAddedMovieIds(prev => [...prev, movie.id]);
             } else {
                 toastError('Failed to add. Try again.');
@@ -117,7 +115,6 @@ const Home = () => {
 
     return (
         <div className="space-y-10">
-            {/* Hero / Search */}
             <header className="relative rounded-3xl overflow-hidden p-8 md:p-12 text-center border border-brand-border/60 shadow-2xl">
                 <div 
                     className="absolute inset-0 bg-cover bg-center filter brightness-[0.35] scale-105 transition-transform duration-700 hover:scale-100"
@@ -154,7 +151,6 @@ const Home = () => {
                 </div>
             </header>
 
-            {/* Results */}
             <section className="space-y-6">
                 <div className="flex items-baseline justify-between border-b border-brand-border pb-3">
                     <h2 className="text-lg font-semibold text-white">
@@ -165,20 +161,17 @@ const Home = () => {
                     </span>
                 </div>
 
-                {/* Error state */}
                 {error && (
                     <div className="bg-red-500/8 border border-red-500/15 p-4 rounded-xl text-red-400 text-sm text-center">
                         {error}
                     </div>
                 )}
 
-                {/* Loading state */}
                 {loading ? (
                     <div className="flex justify-center items-center py-20">
                         <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent" />
                     </div>
                 ) : movies.length === 0 ? (
-                    /* Empty state */
                     <div className="flex flex-col items-center justify-center py-24 text-center">
                         <Search className="w-10 h-10 text-slate-700 mb-3" />
                         <p className="text-brand-muted font-medium">No movies found</p>
