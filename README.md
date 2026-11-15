@@ -23,23 +23,27 @@ CineScope 2.0 answers three critical questions for any film:
 
 ### 3. Gemini-Grounded Audience & News Pulse
 - Solves the cold-start problem of empty user reviews on new platforms by analyzing publicly available web sentiment.
-- Powered by **Google Gemini 3.8 Flash** via the `@google/genai` SDK with **Google Search Grounding**.
+- Powered by **Google Gemini Flash API** (`gemini-3.5-flash-lite` / `gemini-3.8-flash`) via the official `@google/genai` SDK with **Google Search Grounding**.
 - Analyzes authentic public sentiment across X (Twitter), Reddit, and entertainment news while filtering out bot spam, promotional hype, and plot spoilers.
 - Provides an **Organic Sentiment Score (0–100)**, **Verdict Badge** (*Must Watch*, *Sleeper Hit*, *Mixed / Niche*, *Overhyped*, *Skip*), **Praised For** & **Criticized For** highlights, and verified citation sources.
 - **MongoDB 24-hour TTL caching** prevents redundant AI calls and delivers near-instant repeat responses.
 - In-process deduplication prevents concurrent requests from duplicating Gemini calls.
+- Automatic graceful fallback if search grounding hits API rate limits.
 
 ### 4. Indian OTT Availability
 - Powered by TMDB watch providers for the Indian region (`IN`).
-- Categorized into **Stream**, **Rent**, and **Buy** options with official platform logos.
+- Covers **Subscription Streams**, **Free**, **Ad-Supported (AVOD)**, **Rent**, and **Buy** options with official platform logos.
 - Direct search links to leading Indian streaming platforms:
   - **Netflix**
   - **Amazon Prime Video**
   - **JioHotstar / Disney+ Hotstar**
+  - **JioCinema**
   - **SonyLIV**
   - **ZEE5**
+  - **YouTube**
   - **Apple TV**
-- JustWatch regional link fallback for complete coverage.
+- **1-Click Direct Search Fallback**: Instant search toolbar for all major Indian OTT platforms when regional catalog indexing is delayed on TMDB/JustWatch.
+- **International Streaming Indicator**: Displays whether the movie is already streaming in global regions (e.g. US) when Indian availability is pending.
 
 ### 5. Personal Cinema Hub
 - JWT-authenticated personal library with dual states: **Want to Watch** and **Watched**.
@@ -57,7 +61,7 @@ flowchart TD
     Server["Express.js REST API"]
     DB[(MongoDB Database)]
     TMDB["TMDB REST API"]
-    Gemini["Google Gemini 3.8 Flash"]
+    Gemini["Google Gemini Flash API"]
     Search["Google Search Grounding"]
 
     Client -->|Axios HTTP Requests| Server
@@ -97,6 +101,7 @@ flowchart TD
 | `GET` | `/api/movies/search?query=...` | Public | Search movies by title on TMDB |
 | `GET` | `/api/movies/popular` | Public | Get popular movies (7-min server cache) |
 | `GET` | `/api/movies/details/:id` | Public | Get movie details, cast, and metadata |
+| `GET` | `/api/movies/cache-stats` | Public | Get in-memory cache hit/miss statistics |
 | `GET` | `/api/movies/:id/videos` | Public | Get trailers and clips filtered for YouTube |
 | `GET` | `/api/movies/:id/providers?title=...` | Public | Get Indian OTT streaming providers and search links |
 | `GET` | `/api/movies/:id/verdict?title=...&year=...` | Optional JWT | Get or generate Gemini-grounded audience verdict |
@@ -140,6 +145,7 @@ MONGODB_URI=mongodb://127.0.0.1:27017/cinescope
 JWT_SECRET=your-secure-random-jwt-secret
 TMDB_API_KEY=your-tmdb-api-key
 GEMINI_API_KEY=your-google-gemini-api-key
+GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 Install backend dependencies and start development server:
